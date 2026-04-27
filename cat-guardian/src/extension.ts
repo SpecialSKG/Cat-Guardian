@@ -1,26 +1,87 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
+let statusBarItem: vscode.StatusBarItem;
+let timer: ReturnType<typeof setInterval> | undefined;
+let remainingSeconds = 0;
+let isRunning = false;
+
+const WORK_MINUTES = 5;
+
 export function activate(context: vscode.ExtensionContext) {
+  statusBarItem = vscode.window.createStatusBarItem(
+    vscode.StatusBarAlignment.Left,
+    100
+  );
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "cat-guardian" is now active!');
+  statusBarItem.text = '🐱 Cat Guardian';
+  statusBarItem.tooltip = 'Iniciar temporizador de Cat Guardian';
+  statusBarItem.command = 'cat-guardian.startTimer';
+  statusBarItem.show();
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	const disposable = vscode.commands.registerCommand('cat-guardian.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from Cat Guardian!');
-	});
+  const disposable = vscode.commands.registerCommand('cat-guardian.startTimer', () => {
+    if (isRunning) {
+      stopTimer();
+      vscode.window.showInformationMessage('Cat Guardian detenido 🐱');
+      return;
+    }
 
-	context.subscriptions.push(disposable);
+    startTimer();
+  });
+
+  context.subscriptions.push(statusBarItem);
+  context.subscriptions.push(disposable);
 }
 
-// This method is called when your extension is deactivated
-export function deactivate() {}
+function startTimer() {
+  remainingSeconds = WORK_MINUTES * 60;
+  isRunning = true;
+
+  updateStatusBar();
+
+  timer = setInterval(() => {
+    remainingSeconds--;
+
+    updateStatusBar();
+
+    if (remainingSeconds <= 0) {
+      finishTimer();
+    }
+  }, 1000);
+
+  vscode.window.showInformationMessage('Cat Guardian iniciado 🐱');
+}
+
+function stopTimer() {
+  isRunning = false;
+
+  if (timer) {
+    clearInterval(timer);
+    timer = undefined;
+  }
+
+  statusBarItem.text = '🐱 Cat Guardian';
+  statusBarItem.tooltip = 'Iniciar temporizador de Cat Guardian';
+}
+
+function finishTimer() {
+  stopTimer();
+
+  vscode.window.showInformationMessage('Tiempo terminado. Hora de descansar 🐱');
+}
+
+function updateStatusBar() {
+  const minutes = Math.floor(remainingSeconds / 60);
+  const seconds = remainingSeconds % 60;
+
+  const formattedMinutes = String(minutes).padStart(2, '0');
+  const formattedSeconds = String(seconds).padStart(2, '0');
+
+  statusBarItem.text = `🐱 ${formattedMinutes}:${formattedSeconds}`;
+  statusBarItem.tooltip = 'Cat Guardian está contando. Haz clic para detenerlo.';
+}
+
+export function deactivate() {
+  if (timer) {
+    clearInterval(timer);
+  }
+}
