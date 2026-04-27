@@ -40,6 +40,7 @@ let statusBarItem;
 let timer;
 let remainingSeconds = 0;
 let isRunning = false;
+let isWindowFocused = true;
 function activate(context) {
     statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
     statusBarItem.text = '🐱 Cat Guardian';
@@ -54,8 +55,15 @@ function activate(context) {
         }
         startTimer(context);
     });
+    const windowStateDisposable = vscode.window.onDidChangeWindowState((state) => {
+        isWindowFocused = state.focused;
+        if (isRunning) {
+            updateStatusBar();
+        }
+    });
     context.subscriptions.push(statusBarItem);
     context.subscriptions.push(disposable);
+    context.subscriptions.push(windowStateDisposable);
     const config = vscode.workspace.getConfiguration('catGuardian');
     const autoStart = config.get('autoStart', false);
     if (autoStart) {
@@ -68,6 +76,9 @@ function startTimer(context) {
     remainingSeconds = Math.round(workMinutes * 60);
     updateStatusBar();
     timer = setInterval(() => {
+        if (!isWindowFocused) {
+            return;
+        }
         remainingSeconds--;
         updateStatusBar();
         if (remainingSeconds <= 0) {
@@ -95,6 +106,11 @@ function updateStatusBar() {
     const seconds = remainingSeconds % 60;
     const formattedMinutes = String(minutes).padStart(2, '0');
     const formattedSeconds = String(seconds).padStart(2, '0');
+    if (!isWindowFocused && isRunning) {
+        statusBarItem.text = `🐱 Pausado ${formattedMinutes}:${formattedSeconds}`;
+        statusBarItem.tooltip = 'Cat Guardian está pausado porque VS Code no está enfocado.';
+        return;
+    }
     statusBarItem.text = `🐱 ${formattedMinutes}:${formattedSeconds}`;
     statusBarItem.tooltip = 'Cat Guardian está contando. Haz clic para detenerlo.';
 }

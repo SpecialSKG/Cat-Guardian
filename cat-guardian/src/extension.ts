@@ -4,6 +4,7 @@ let statusBarItem: vscode.StatusBarItem;
 let timer: ReturnType<typeof setInterval> | undefined;
 let remainingSeconds = 0;
 let isRunning = false;
+let isWindowFocused = true;
 
 export function activate(context: vscode.ExtensionContext) {
 	statusBarItem = vscode.window.createStatusBarItem(
@@ -26,8 +27,17 @@ export function activate(context: vscode.ExtensionContext) {
 		startTimer(context);
 	});
 
+	const windowStateDisposable = vscode.window.onDidChangeWindowState((state) => {
+		isWindowFocused = state.focused;
+
+		if (isRunning) {
+			updateStatusBar();
+		}
+	});
+
 	context.subscriptions.push(statusBarItem);
 	context.subscriptions.push(disposable);
+	context.subscriptions.push(windowStateDisposable);
 
 	const config = vscode.workspace.getConfiguration('catGuardian');
 	const autoStart = config.get<boolean>('autoStart', false);
@@ -46,6 +56,10 @@ function startTimer(context: vscode.ExtensionContext) {
 	updateStatusBar();
 
 	timer = setInterval(() => {
+		if (!isWindowFocused) {
+			return;
+		}
+
 		remainingSeconds--;
 
 		updateStatusBar();
@@ -79,14 +93,20 @@ function finishTimer(context: vscode.ExtensionContext) {
 }
 
 function updateStatusBar() {
-	const minutes = Math.floor(remainingSeconds / 60);
-	const seconds = remainingSeconds % 60;
+  const minutes = Math.floor(remainingSeconds / 60);
+  const seconds = remainingSeconds % 60;
 
-	const formattedMinutes = String(minutes).padStart(2, '0');
-	const formattedSeconds = String(seconds).padStart(2, '0');
+  const formattedMinutes = String(minutes).padStart(2, '0');
+  const formattedSeconds = String(seconds).padStart(2, '0');
 
-	statusBarItem.text = `🐱 ${formattedMinutes}:${formattedSeconds}`;
-	statusBarItem.tooltip = 'Cat Guardian está contando. Haz clic para detenerlo.';
+  if (!isWindowFocused && isRunning) {
+    statusBarItem.text = `🐱 Pausado ${formattedMinutes}:${formattedSeconds}`;
+    statusBarItem.tooltip = 'Cat Guardian está pausado porque VS Code no está enfocado.';
+    return;
+  }
+
+  statusBarItem.text = `🐱 ${formattedMinutes}:${formattedSeconds}`;
+  statusBarItem.tooltip = 'Cat Guardian está contando. Haz clic para detenerlo.';
 }
 
 function openBreakScreen(context: vscode.ExtensionContext) {
