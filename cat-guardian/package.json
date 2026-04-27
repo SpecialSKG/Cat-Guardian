@@ -19,7 +19,29 @@
         "command": "cat-guardian.startTimer",
         "title": "Cat Guardian: Start Timer"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Cat Guardian",
+      "properties": {
+        "catGuardian.workMinutes": {
+          "type": "number",
+          "default": 5,
+          "minimum": 0.1,
+          "description": "Minutos de trabajo antes del descanso."
+        },
+        "catGuardian.breakSeconds": {
+          "type": "number",
+          "default": 30,
+          "minimum": 5,
+          "description": "Segundos de descanso cuando termina el temporizador."
+        },
+        "catGuardian.autoStart": {
+          "type": "boolean",
+          "default": false,
+          "description": "Inicia automáticamente el temporizador cuando VS Code termina de cargar."
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

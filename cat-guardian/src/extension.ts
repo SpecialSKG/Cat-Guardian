@@ -5,10 +5,6 @@ let timer: ReturnType<typeof setInterval> | undefined;
 let remainingSeconds = 0;
 let isRunning = false;
 
-const WORK_MINUTES = 0.1; // Para pruebas, puedes cambiar a 25 para el tiempo real
-// const WORK_MINUTES = 5; // Tiempo real para pruebas rápidas
-const BREAK_SECONDS = 30;
-
 export function activate(context: vscode.ExtensionContext) {
 	statusBarItem = vscode.window.createStatusBarItem(
 		vscode.StatusBarAlignment.Left,
@@ -32,11 +28,20 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(statusBarItem);
 	context.subscriptions.push(disposable);
+
+	const config = vscode.workspace.getConfiguration('catGuardian');
+	const autoStart = config.get<boolean>('autoStart', false);
+
+	if (autoStart) {
+		startTimer(context);
+	}
 }
 
 function startTimer(context: vscode.ExtensionContext) {
-	remainingSeconds = WORK_MINUTES * 60;
-	isRunning = true;
+	const config = vscode.workspace.getConfiguration('catGuardian');
+	const workMinutes = config.get<number>('workMinutes', 5);
+
+	remainingSeconds = Math.round(workMinutes * 60);
 
 	updateStatusBar();
 
@@ -85,6 +90,8 @@ function updateStatusBar() {
 }
 
 function openBreakScreen(context: vscode.ExtensionContext) {
+	const config = vscode.workspace.getConfiguration('catGuardian');
+	const breakSeconds = config.get<number>('breakSeconds', 30);
 	const panel = vscode.window.createWebviewPanel(
 		'catGuardianBreak',
 		'Cat Guardian Break',
@@ -94,7 +101,7 @@ function openBreakScreen(context: vscode.ExtensionContext) {
 		}
 	);
 
-	panel.webview.html = getBreakHtml();
+	panel.webview.html = getBreakHtml(breakSeconds);
 
 	panel.webview.onDidReceiveMessage((message) => {
 		if (message.command === 'breakFinished') {
@@ -107,7 +114,7 @@ function openBreakScreen(context: vscode.ExtensionContext) {
 	});
 }
 
-function getBreakHtml(): string {
+function getBreakHtml(breakSeconds: number): string {
 	return `
     <!DOCTYPE html>
     <html lang="es">
@@ -169,7 +176,7 @@ function getBreakHtml(): string {
 
       <script>
         const vscode = acquireVsCodeApi();
-        let remaining = ${BREAK_SECONDS};
+        let remaining = ${breakSeconds};
 
         function updateTimer() {
           const minutes = Math.floor(remaining / 60);
