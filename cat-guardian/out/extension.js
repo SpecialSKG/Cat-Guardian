@@ -40,7 +40,9 @@ let statusBarItem;
 let timer;
 let remainingSeconds = 0;
 let isRunning = false;
-const WORK_MINUTES = 5;
+const WORK_MINUTES = 0.1; // Para pruebas, puedes cambiar a 25 para el tiempo real
+// const WORK_MINUTES = 5; // Tiempo real para pruebas rápidas
+const BREAK_SECONDS = 30;
 function activate(context) {
     statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
     statusBarItem.text = '🐱 Cat Guardian';
@@ -53,12 +55,12 @@ function activate(context) {
             vscode.window.showInformationMessage('Cat Guardian detenido 🐱');
             return;
         }
-        startTimer();
+        startTimer(context);
     });
     context.subscriptions.push(statusBarItem);
     context.subscriptions.push(disposable);
 }
-function startTimer() {
+function startTimer(context) {
     remainingSeconds = WORK_MINUTES * 60;
     isRunning = true;
     updateStatusBar();
@@ -66,7 +68,7 @@ function startTimer() {
         remainingSeconds--;
         updateStatusBar();
         if (remainingSeconds <= 0) {
-            finishTimer();
+            finishTimer(context);
         }
     }, 1000);
     vscode.window.showInformationMessage('Cat Guardian iniciado 🐱');
@@ -80,9 +82,10 @@ function stopTimer() {
     statusBarItem.text = '🐱 Cat Guardian';
     statusBarItem.tooltip = 'Iniciar temporizador de Cat Guardian';
 }
-function finishTimer() {
+function finishTimer(context) {
     stopTimer();
     vscode.window.showInformationMessage('Tiempo terminado. Hora de descansar 🐱');
+    openBreakScreen(context);
 }
 function updateStatusBar() {
     const minutes = Math.floor(remainingSeconds / 60);
@@ -91,6 +94,107 @@ function updateStatusBar() {
     const formattedSeconds = String(seconds).padStart(2, '0');
     statusBarItem.text = `🐱 ${formattedMinutes}:${formattedSeconds}`;
     statusBarItem.tooltip = 'Cat Guardian está contando. Haz clic para detenerlo.';
+}
+function openBreakScreen(context) {
+    const panel = vscode.window.createWebviewPanel('catGuardianBreak', 'Cat Guardian Break', vscode.ViewColumn.One, {
+        enableScripts: true
+    });
+    panel.webview.html = getBreakHtml();
+    panel.webview.onDidReceiveMessage((message) => {
+        if (message.command === 'breakFinished') {
+            panel.dispose();
+            vscode.window.showInformationMessage('Descanso terminado. Nuevo ciclo iniciado 🐱');
+            startTimer(context);
+        }
+    });
+}
+function getBreakHtml() {
+    return `
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Cat Guardian Break</title>
+      <style>
+        body {
+          margin: 0;
+          height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #111827;
+          color: #ffffff;
+          font-family: Arial, sans-serif;
+        }
+
+        .card {
+          text-align: center;
+          padding: 40px;
+          border-radius: 24px;
+          background: #1f2937;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+          max-width: 520px;
+        }
+
+        .cat {
+          font-size: 90px;
+          margin-bottom: 20px;
+        }
+
+        h1 {
+          font-size: 32px;
+          margin: 0 0 12px;
+        }
+
+        p {
+          font-size: 16px;
+          opacity: 0.85;
+          margin: 0;
+        }
+
+        .timer {
+          font-size: 52px;
+          font-weight: bold;
+          margin-top: 28px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="card">
+        <div class="cat">🐱</div>
+        <h1>Hora de descansar</h1>
+        <p>El gato guardián recomienda una pausa breve.</p>
+        <div class="timer" id="timer">00:30</div>
+      </div>
+
+      <script>
+        const vscode = acquireVsCodeApi();
+        let remaining = ${BREAK_SECONDS};
+
+        function updateTimer() {
+          const minutes = Math.floor(remaining / 60);
+          const seconds = remaining % 60;
+
+          document.getElementById('timer').textContent =
+            String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+
+          if (remaining <= 0) {
+            vscode.postMessage({
+              command: 'breakFinished'
+            });
+            return;
+          }
+
+          remaining--;
+          setTimeout(updateTimer, 1000);
+        }
+
+        updateTimer();
+      </script>
+    </body>
+    </html>
+  `;
 }
 function deactivate() {
     if (timer) {
