@@ -93,20 +93,20 @@ function finishTimer(context: vscode.ExtensionContext) {
 }
 
 function updateStatusBar() {
-  const minutes = Math.floor(remainingSeconds / 60);
-  const seconds = remainingSeconds % 60;
+	const minutes = Math.floor(remainingSeconds / 60);
+	const seconds = remainingSeconds % 60;
 
-  const formattedMinutes = String(minutes).padStart(2, '0');
-  const formattedSeconds = String(seconds).padStart(2, '0');
+	const formattedMinutes = String(minutes).padStart(2, '0');
+	const formattedSeconds = String(seconds).padStart(2, '0');
 
-  if (!isWindowFocused && isRunning) {
-    statusBarItem.text = `🐱 Pausado ${formattedMinutes}:${formattedSeconds}`;
-    statusBarItem.tooltip = 'Cat Guardian está pausado porque VS Code no está enfocado.';
-    return;
-  }
+	if (!isWindowFocused && isRunning) {
+		statusBarItem.text = `🐱 Pausado ${formattedMinutes}:${formattedSeconds}`;
+		statusBarItem.tooltip = 'Cat Guardian está pausado porque VS Code no está enfocado.';
+		return;
+	}
 
-  statusBarItem.text = `🐱 ${formattedMinutes}:${formattedSeconds}`;
-  statusBarItem.tooltip = 'Cat Guardian está contando. Haz clic para detenerlo.';
+	statusBarItem.text = `🐱 ${formattedMinutes}:${formattedSeconds}`;
+	statusBarItem.tooltip = 'Cat Guardian está contando. Haz clic para detenerlo.';
 }
 
 function openBreakScreen(context: vscode.ExtensionContext) {
