@@ -37,7 +37,7 @@
         },
         "catGuardian.autoStart": {
           "type": "boolean",
-          "default": false,
+          "default": true,
           "description": "Inicia automáticamente el temporizador cuando VS Code termina de cargar."
         }
       }

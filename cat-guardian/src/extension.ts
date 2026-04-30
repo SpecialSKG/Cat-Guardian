@@ -5,6 +5,7 @@ let timer: ReturnType<typeof setInterval> | undefined;
 let remainingSeconds = 0;
 let isRunning = false;
 let isWindowFocused = true;
+let isOnBreak = false;
 
 export function activate(context: vscode.ExtensionContext) {
 	statusBarItem = vscode.window.createStatusBarItem(
@@ -18,6 +19,11 @@ export function activate(context: vscode.ExtensionContext) {
 	statusBarItem.show();
 
 	const disposable = vscode.commands.registerCommand('cat-guardian.startTimer', () => {
+		if (isOnBreak) {
+			vscode.window.showInformationMessage('Cat Guardian está en descanso 🐱');
+			return;
+		}
+
 		if (isRunning) {
 			stopTimer();
 			vscode.window.showInformationMessage('Cat Guardian detenido 🐱');
@@ -48,6 +54,13 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 function startTimer(context: vscode.ExtensionContext) {
+	if (timer) {
+		clearInterval(timer);
+		timer = undefined;
+	}
+
+	isRunning = true;
+
 	const config = vscode.workspace.getConfiguration('catGuardian');
 	const workMinutes = config.get<number>('workMinutes', 5);
 
@@ -110,14 +123,20 @@ function updateStatusBar() {
 }
 
 function openBreakScreen(context: vscode.ExtensionContext) {
+	isOnBreak = true;
+	statusBarItem.text = '🐱 Descanso';
+	statusBarItem.tooltip = 'Cat Guardian está en modo descanso.';
+
 	const config = vscode.workspace.getConfiguration('catGuardian');
 	const breakSeconds = config.get<number>('breakSeconds', 30);
+
 	const panel = vscode.window.createWebviewPanel(
 		'catGuardianBreak',
 		'Cat Guardian Break',
 		vscode.ViewColumn.One,
 		{
-			enableScripts: true
+			enableScripts: true,
+			retainContextWhenHidden: true
 		}
 	);
 
@@ -125,11 +144,24 @@ function openBreakScreen(context: vscode.ExtensionContext) {
 
 	panel.webview.onDidReceiveMessage((message) => {
 		if (message.command === 'breakFinished') {
+			isOnBreak = false;
+
 			panel.dispose();
 
 			vscode.window.showInformationMessage('Descanso terminado. Nuevo ciclo iniciado 🐱');
 
 			startTimer(context);
+		}
+	});
+
+	panel.onDidDispose(() => {
+		if (isOnBreak) {
+			isOnBreak = false;
+
+			statusBarItem.text = '🐱 Cat Guardian';
+			statusBarItem.tooltip = 'Iniciar temporizador de Cat Guardian';
+
+			vscode.window.showWarningMessage('Descanso cerrado manualmente. Cat Guardian se detuvo 🐱');
 		}
 	});
 }
@@ -191,7 +223,7 @@ function getBreakHtml(breakSeconds: number): string {
         <div class="cat">🐱</div>
         <h1>Hora de descansar</h1>
         <p>El gato guardián recomienda una pausa breve.</p>
-        <div class="timer" id="timer">00:30</div>
+        <div class="timer" id="timer">--:--</div>
       </div>
 
       <script>
