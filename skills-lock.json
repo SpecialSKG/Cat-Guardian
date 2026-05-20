@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "skills": {
+    "nodejs-backend-patterns": {
+      "source": "wshobson/agents",
+      "sourceType": "autoskills-registry",
+      "computedHash": "710a5e6f83c46e8f6c43356df55c143a7375c4414559a581654ce51709138c55"
+    },
+    "nodejs-best-practices": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "7361ab02fb6b09913e3bdd9cf61c629ed6c17de9485e6a781054e5d437ccfc29"
+    },
+    "typescript-advanced-types": {
+      "source": "wshobson/agents",
+      "sourceType": "autoskills-registry",
+      "computedHash": "5ca0e177c6aaaba1889255691224daafdb7d71f317cc70bede1590d3907ded42"
+    },
+    "vscode-extension-expert": {
+      "source": "s-hiraoku/vscode-sidebar-terminal",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/vscode-extension-expert/SKILL.md",
+      "computedHash": "75c47e6af1766e54520759124efb1a66cfae9f739a2a8039b4c253b1bdfe0391"
+    },
+    "vscode-extension-guide": {
+      "source": "aktsmm/agent-skills",
+      "sourceType": "github",
+      "skillPath": "vscode-extension-guide/SKILL.md",
+      "computedHash": "b883e14f865b7300deb92e8bd04383869ddc02102fe69a0ac91ba9893916b6c7"
+    }
+  }
+}
